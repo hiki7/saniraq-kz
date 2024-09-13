@@ -125,3 +125,40 @@ async def update_user(user_data: UserBase, current_user: User = Depends(get_curr
 @app.get("/auth/users/me", response_model=UserBase)
 async def get_user_info(current_user: User = Depends(get_current_user)):
     return current_user
+
+@app.post("/shanyraks/", response_model=Shanyrak)
+async def create_shanyrak(shanyrak: ShanyrakBase, current_user: User = Depends(get_current_user)):
+    db_shanyrak = Shanyrak(**shanyrak.dict(), user_id=current_user.id)
+    with Session(engine) as session:
+        session.add(db_shanyrak)
+        session.commit()
+        session.refresh(db_shanyrak)
+    return db_shanyrak
+
+@app.get("/shanyraks/{id}", response_model=Shanyrak)
+async def get_shanyrak(id: int):
+    with Session(engine) as session:
+        shanyrak = session.get(Shanyrak, id)
+        if shanyrak:
+            return shanyrak
+        raise HTTPException(status_code=404, detail="Shanyrak not found")
+
+@app.patch("/shanyraks/{id}", response_model=Shanyrak)
+async def update_shanyrak(id: int, shanyrak: ShanyrakBase, current_user: User = Depends(get_current_user)):
+    with Session(engine) as session:
+        db_shanyrak = session.get(Shanyrak, id)
+        if db_shanyrak and db_shanyrak.user_id == current_user.id:
+            for key, value in shanyrak.dict().items():
+                setattr(db_shanyrak, key, value)
+            session.commit()
+            session.refresh(db_shanyrak)
+        return db_shanyrak
+
+@app.delete("/shanyraks/{id}", response_model=dict)
+async def delete_shanyrak(id: int, current_user: User = Depends(get_current_user)):
+    with Session(engine) as session:
+        shanyrak = session.get(Shanyrak, id)
+        if shanyrak and shanyrak.user_id == current_user.id:
+            session.delete(shanyrak)
+            session.commit()
+        return {"message": "Shanyrak deleted"}
