@@ -40,6 +40,7 @@ class ShanyrakBase(SQLModel):
 class Shanyrak(ShanyrakBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int
+    total_comments: int = Field(default=0)
 
 
 class CommentBase(SQLModel):

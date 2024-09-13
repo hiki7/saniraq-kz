@@ -11,6 +11,7 @@ fastapi = "^0.114.1"
 sqlmodel = "^0.0.22"
 alembic = "^1.13.2"
 python-jose = "^3.3.0"
+python-multipart = "^0.0.9"
 
 
 [build-system]
