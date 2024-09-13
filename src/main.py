@@ -109,3 +109,19 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.patch("/auth/users/me", response_model=UserBase)
+async def update_user(user_data: UserBase, current_user: User = Depends(get_current_user)):
+    with Session(engine) as session:
+        db_user = session.get(User, current_user.id)
+        if db_user:
+            db_user.phone = user_data.phone
+            db_user.name = user_data.name
+            db_user.city = user_data.city
+            session.commit()
+            session.refresh(db_user)
+        return db_user
+
+@app.get("/auth/users/me", response_model=UserBase)
+async def get_user_info(current_user: User = Depends(get_current_user)):
+    return current_user
