@@ -162,3 +162,45 @@ async def delete_shanyrak(id: int, current_user: User = Depends(get_current_user
             session.delete(shanyrak)
             session.commit()
         return {"message": "Shanyrak deleted"}
+
+@app.post("/shanyraks/{id}/comments", response_model=Comment)
+async def add_comment(id: int, comment: CommentBase, current_user: User = Depends(get_current_user)):
+    with Session(engine) as session:
+        db_shanyrak = session.get(Shanyrak, id)
+        if db_shanyrak:
+            db_comment = Comment(**comment.dict(), user_id=current_user.id, shanyrak_id=id)
+            session.add(db_comment)
+            db_shanyrak.total_comments += 1
+            session.commit()
+            session.refresh(db_shanyrak)
+            session.refresh(db_comment)
+        return db_comment
+
+@app.get("/shanyraks/{id}/comments", response_model=List[Comment])
+async def get_comments(id: int):
+    with Session(engine) as session:
+        comments = session.exec(select(Comment).where(Comment.shanyrak_id == id)).all()
+    return comments
+
+@app.patch("/shanyraks/{id}/comments/{comment_id}", response_model=Comment)
+async def update_comment(id: int, comment_id: int, new_comment: CommentBase, current_user: User = Depends(get_current_user)):
+    with Session(engine) as session:
+        db_comment = session.get(Comment, comment_id)
+        if db_comment and db_comment.user_id == current_user.id:
+            db_comment.content = new_comment.content
+            session.commit()
+            session.refresh(db_comment)
+        return db_comment
+
+@app.delete("/shanyraks/{id}/comments/{comment_id}", response_model=dict)
+async def delete_comment(id: int, comment_id: int, current_user: User = Depends(get_current_user)):
+    with Session(engine) as session:
+        db_comment = session.get(Comment, comment_id)
+        if db_comment and db_comment.user_id == current_user.id:
+            db_shanyrak = session.get(Shanyrak, id)
+            if db_shanyrak:
+                session.delete(db_comment)
+                db_shanyrak.total_comments -= 1
+                session.commit()
+                session.refresh(db_shanyrak)
+        return {"message": "Comment deleted"}
