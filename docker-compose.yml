@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://yadmin:qwerty123@db:5432/saniraq-kz
+    depends_on:
+      - db
+    networks:
+      - mynetwork
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: yadmin
+      POSTGRES_PASSWORD: qwerty123
+      POSTGRES_DB: saniraq-kz
+    ports:
+      - "5433:5432"
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
